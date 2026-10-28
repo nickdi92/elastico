@@ -44,7 +44,14 @@ in HTTPS (o su `localhost`); la build usa percorsi relativi, quindi funziona in 
   (Compendium of Physical Activities) × peso × durata.
 - **Allenamento guidato** (`src/domain/timeline.ts`, `player.ts`, `announce.ts`): la sessione
   diventa una sequenza di passi (riscaldamento, serie, riposi, defaticamento) con timer basato
-  sull'orologio reale, quindi resta preciso anche se il telefono rallenta l'app.
+  sull'orologio reale, quindi resta preciso anche se il telefono rallenta l'app. Durante ogni
+  esercizio "Come si fa" apre la scheda con foto e passi (e mette in pausa finché è aperta).
+- **Pausa e ripresa** (`src/domain/activeWorkout.ts`): l'allenamento in corso viene salvato ogni
+  pochi secondi in `localStorage` (`elastico:active`). Con "Pausa, riprendo dopo" si esce e si
+  gira per l'app; una barra sopra le sezioni lo riprende dal punto esatto. Se l'app viene chiusa
+  a timer acceso, alla riapertura riparte in pausa dall'ultimo salvataggio.
+- **Storico** (`src/domain/history.ts`): ogni allenamento si apre, si modifica o si elimina; si
+  possono aggiungere allenamenti fatti senza l'app. Le modifiche non toccano il piano.
 
 ## Come si fa ogni esercizio
 

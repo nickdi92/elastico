@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
+import type { ActiveWorkout } from '../../domain/activeWorkout';
 import { announcement, isGetReady } from '../../domain/announce';
 import { kcalPerSecond } from '../../domain/calories';
 import { COLORS, bandColor, stepTheme } from '../../domain/colors';
@@ -21,22 +22,29 @@ import {
 import { buildTimeline } from '../../domain/timeline';
 import type { Equipment, Profile, SessionTemplate, Step, WorkoutRecord } from '../../domain/types';
 import { beep, speak, stopSpeaking } from '../../services/audio';
-import type { Settings } from '../../services/storage';
+import { type Settings, saveActive } from '../../services/storage';
 import { allowSleep, keepAwake } from '../../services/wakeLock';
 import { Sheet } from '../components/controls';
+import { ExerciseSheet, type ExerciseSheetTarget } from '../components/ExerciseSheet';
 import { useHr } from '../components/HeartRate';
-import { BandLoop, IconClose, IconNext, IconPause, IconPlay, IconPrev, PlatformIcon } from '../components/icons';
+import { BandLoop, IconClose, IconInfo, IconNext, IconPause, IconPlay, IconPrev, PlatformIcon } from '../components/icons';
 import { formatClock } from '../labels';
 
 const TICK_MS = 200;
 const HR_SAMPLE_SEC = 5;
+/** Ogni quanto salvare l'allenamento in corso, per riprenderlo se l'app viene chiusa. */
+const SAVE_MS = 5000;
 
 interface Props {
   session: SessionTemplate;
+  /** Allenamento lasciato in pausa da riprendere. */
+  saved?: ActiveWorkout;
   profile: Profile;
   equipment: Equipment;
   settings: Settings;
   onFinish: (r: WorkoutRecord) => void;
+  /** Esce lasciando l'allenamento in pausa. */
+  onMinimize: (a: ActiveWorkout) => void;
   onQuit: () => void;
 }
 
@@ -58,20 +66,30 @@ function sideLabel(step: Step, el: number): string {
   return el < step.durationSec / 2 ? 'lato destro' : 'lato sinistro';
 }
 
-export function Workout({ session, profile, equipment, settings, onFinish, onQuit }: Props) {
+export function Workout({ session, saved, profile, equipment, settings, onFinish, onMinimize, onQuit }: Props) {
   const steps = useMemo(() => buildTimeline(session), [session]);
   const hr = useHr();
   const bpmRef = useRef(hr.bpm);
   bpmRef.current = hr.bpm;
 
-  const ps = useRef<PlayerState>(start(Date.now()));
-  const last = useRef({ t: Date.now(), index: 0, elapsed: 0 });
-  const acc = useRef({ kcal: 0, activeSec: 0, hrSec: 0, sampleClock: 0, samples: [] as number[], workDone: new Set<number>() });
-  const startedAt = useRef(new Date().toISOString());
-  const finished = useRef(false);
+  const ps = useRef<PlayerState>(saved?.player ?? start(Date.now()));
+  const last = useRef({ t: Date.now(), index: ps.current.index, elapsed: elapsed(ps.current, Date.now()) });
+  const acc = useRef(
+    saved
+      ? { ...saved.totals, samples: [...saved.totals.samples], workDone: new Set(saved.totals.workDone) }
+      : { kcal: 0, activeSec: 0, hrSec: 0, sampleClock: 0, samples: [] as number[], workDone: new Set<number>() },
+  );
+  const startedAt = useRef(saved?.startedAt ?? new Date().toISOString());
+  /** Finito, abbandonato o lasciato in pausa: da qui in poi non si salva più. */
+  const closed = useRef(false);
+  const lastSave = useRef(Date.now());
+  /** Dopo una ripresa la voce ripete dove eravamo, alla prima pressione di play. */
+  const announceOnPlay = useRef(!!saved);
   const [, setFrame] = useState(0);
   const [exitOpen, setExitOpen] = useState(false);
   const pausedByExit = useRef(false);
+  const [guide, setGuide] = useState<ExerciseSheetTarget | null>(null);
+  const pausedByGuide = useRef(false);
 
   const say = (text: string) => settings.voice && speak(text);
   const sound = (freq: number, ms: number, vol?: number) => settings.sounds && beep(freq, ms, vol);
@@ -121,9 +139,20 @@ export function Workout({ session, profile, equipment, settings, onFinish, onQui
     };
   };
 
+  const snapshot = (): ActiveWorkout => {
+    const { workDone, ...totals } = acc.current;
+    return { session, startedAt: startedAt.current, player: ps.current, totals: { ...totals, workDone: [...workDone] }, savedAt: Date.now() };
+  };
+
+  const persist = () => {
+    if (closed.current) return;
+    lastSave.current = Date.now();
+    saveActive(snapshot());
+  };
+
   const finish = () => {
-    if (finished.current) return;
-    finished.current = true;
+    if (closed.current) return;
+    closed.current = true;
     sound(1318, 400);
     say('Allenamento finito. Ottimo lavoro!');
     onFinish(record());
@@ -152,6 +181,7 @@ export function Workout({ session, profile, equipment, settings, onFinish, onQui
     }
     ps.current = next;
     last.current = { t, ...moment };
+    if (t - lastSave.current >= SAVE_MS) persist();
     setFrame((f) => f + 1);
   };
 
@@ -167,16 +197,25 @@ export function Workout({ session, profile, equipment, settings, onFinish, onQui
     last.current = { t, index: next.index, elapsed: elapsed(next, t) };
     if (next.done) return finish();
     const moved = next.index !== prev.index || elapsed(next, t) < elapsed(prev, t) - 0.5;
-    if (moved && next.pausedAt === null) announce(next.index);
+    const resumed = prev.pausedAt !== null && next.pausedAt === null && announceOnPlay.current;
+    if (resumed) announceOnPlay.current = false;
+    if ((moved || resumed) && next.pausedAt === null) announce(next.index);
+    persist();
     setFrame((f) => f + 1);
   };
 
   useEffect(() => {
     keepAwake();
-    announce(0);
+    if (!saved) announce(0);
     const id = setInterval(loop, TICK_MS);
+    const onHide = () => document.visibilityState === 'hidden' && persist();
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', persist);
     return () => {
       clearInterval(id);
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', persist);
+      persist();
       allowSleep();
       stopSpeaking();
     };
@@ -204,6 +243,42 @@ export function Workout({ session, profile, equipment, settings, onFinish, onQui
     setExitOpen(false);
     if (pausedByExit.current) togglePause();
   };
+  const minimize = () => {
+    if (ps.current.pausedAt === null) act((st, now) => pause(st, now));
+    stopSpeaking();
+    const snap = snapshot();
+    saveActive(snap);
+    closed.current = true;
+    onMinimize(snap);
+  };
+  const quit = () => {
+    closed.current = true;
+    onQuit();
+  };
+  /** Scheda "come si fa": l'allenamento si ferma mentre la leggi e riparte quando la chiudi. */
+  const openGuide = (exerciseId: string, withDose: boolean) => {
+    pausedByGuide.current = !paused;
+    if (!paused) togglePause();
+    setGuide({ exerciseId, prescription: withDose ? session.main.find((p) => p.exerciseId === exerciseId) : undefined });
+  };
+  const closeGuide = () => {
+    setGuide(null);
+    if (pausedByGuide.current) togglePause();
+  };
+  const howTo = (exerciseId: string, withDose: boolean) => (
+    <button type="button" class="w-howto glass" onClick={() => openGuide(exerciseId, withDose)}>
+      <IconInfo />
+      Come si fa
+    </button>
+  );
+  const pausedLine = paused && (
+    <div class="w-paused">
+      In pausa
+      <button type="button" class="glass" onClick={minimize}>
+        Esci, riprendi dopo
+      </button>
+    </div>
+  );
 
   const center = step.kind === 'warmup' ? 'Riscaldamento' : step.kind === 'cooldown' ? 'Defaticamento' : `${step.exerciseNo} di ${step.exerciseCount}`;
   const right =
@@ -270,9 +345,14 @@ export function Workout({ session, profile, equipment, settings, onFinish, onQui
             Salta
           </button>
         </div>
-        {paused && <div class="w-paused">In pausa</div>}
+        {pausedLine}
         <div class="w-next glass">
-          <div class="k">{sameExercise ? `Prossimo: serie ${step.set} di ${step.totalSets}` : `Prossimo, esercizio ${step.exerciseNo} di ${step.exerciseCount}`}</div>
+          <div class="k">
+            {sameExercise ? `Prossimo: serie ${step.set} di ${step.totalSets}` : `Prossimo, esercizio ${step.exerciseNo} di ${step.exerciseCount}`}
+            <button type="button" class="w-howto-link" onClick={() => openGuide(next.exerciseId, true)}>
+              Come si fa
+            </button>
+          </div>
           <div class="nn">
             <span>{next.name}</span>
             {nextBand ? <BandLoop color={COLORS[nextBand].hex} size={34} /> : zoneColor ? <PlatformIcon handles={zoneColor} size={34} board={theme.text} /> : null}
@@ -328,7 +408,8 @@ export function Workout({ session, profile, equipment, settings, onFinish, onQui
         {line && <div class="w-reps">{line}</div>}
         <div class="w-cad">{step.kind === 'work' ? ex.cadence : ex.setup}</div>
         {step.kind !== 'work' && nextStep && nextStep.kind === step.kind && <div class="w-cad">Poi: {nextStep.name.toLowerCase()}</div>}
-        {paused && <div class="w-paused">In pausa</div>}
+        {howTo(step.exerciseId, step.kind === 'work')}
+        {pausedLine}
         {stats}
         {controls}
       </>
@@ -348,18 +429,22 @@ export function Workout({ session, profile, equipment, settings, onFinish, onQui
         {body}
       </div>
       {exitOpen && (
-        <Sheet title="Vuoi fermarti?" text="Puoi salvare quello che hai fatto finora oppure uscire senza salvare." onClose={closeExit}>
+        <Sheet title="Vuoi fermarti?" text="Puoi metterlo in pausa e riprenderlo quando vuoi, salvare quello che hai fatto finora oppure uscire senza salvare." onClose={closeExit}>
           <button type="button" class="btn" onClick={closeExit}>
             Continua l'allenamento
+          </button>
+          <button type="button" class="btn secondary" onClick={minimize}>
+            Pausa, riprendo dopo
           </button>
           <button type="button" class="btn secondary" onClick={finish}>
             Termina e salva
           </button>
-          <button type="button" class="btn danger" onClick={onQuit}>
+          <button type="button" class="btn danger" onClick={quit}>
             Esci senza salvare
           </button>
         </Sheet>
       )}
+      {guide && <ExerciseSheet {...guide} equipment={equipment} onClose={closeGuide} />}
     </div>
   );
 }

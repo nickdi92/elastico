@@ -937,12 +937,113 @@ select:focus-visible {
 }
 
 .w-paused {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  margin-top: 8px;
-  opacity: 0.9;
+  margin-top: 10px;
+}
+
+.w-paused button {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  padding: 6px 12px;
+  border-radius: 16px;
+}
+
+.w-howto {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 7px 14px 7px 11px;
+  border-radius: 18px;
+  margin-top: 12px;
+}
+
+.w-next .k {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.w-howto-link {
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 1;
+  flex-shrink: 0;
+}
+
+/* ---------- allenamento in pausa, sopra la barra ---------- */
+.active-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom) + 72px);
+  width: calc(100% - 2 * var(--pad));
+  max-width: calc(480px - 2 * var(--pad));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 14px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, var(--from) 0%, var(--mid) 55%, var(--to) 100%);
+  color: var(--fg);
+  text-align: left;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  z-index: 10;
+}
+
+.active-bar .ab-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.active-bar .ab-text span {
+  opacity: 0.85;
+}
+
+.active-bar .ab-text b {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.active-bar .ab-play {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.active-bar .ab-play svg {
+  width: 18px;
+  height: 20px;
+}
+
+#app:has(.active-bar) .screen {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 160px);
 }
 
 /* ---------- foglio a comparsa ---------- */
@@ -1161,4 +1262,68 @@ button.ex-row {
   font-size: inherit;
   text-decoration: underline dotted;
   text-underline-offset: 3px;
+}
+
+/* ---------- storico ---------- */
+.row .chev {
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  padding-left: 2px;
+}
+
+.row .r + .chev {
+  margin-left: 0;
+}
+
+.sheet .stat-grid {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 6px 14px;
+}
+
+.sheet .hr-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 10px 14px;
+}
+
+.nums2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.num.when input {
+  font-family: var(--sans);
+  font-size: 19px;
+  font-weight: 600;
+  padding: 6px 0 4px;
+  min-height: 38px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.row[role='radio'] .check {
+  margin-left: auto;
+  color: #6b48a8;
+  visibility: hidden;
+}
+
+.row[role='radio'][aria-checked='true'] .check {
+  visibility: visible;
+}
+
+.row .letter {
+  font-family: var(--serif);
+  font-size: 24px;
+  width: 22px;
+  text-align: center;
+  color: var(--muted);
+}
+
+@media (prefers-color-scheme: dark) {
+  .row[role='radio'] .check {
+    color: #b9a5ef;
+  }
 }

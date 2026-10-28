@@ -1,10 +1,12 @@
+import type { ActiveWorkout } from '../../domain/activeWorkout';
 import { estimateKcal } from '../../domain/calories';
 import { nextSessionIndex, weekCount, weekday } from '../../domain/schedule';
 import { buildTimeline, totalDuration } from '../../domain/timeline';
 import type { Equipment, Plan, Profile, Schedule, WorkoutRecord } from '../../domain/types';
+import { activeInfo } from '../components/ActiveBar';
 import { NeededList } from '../components/Equipment';
 import { WatchRow } from '../components/HeartRate';
-import { formatDate } from '../labels';
+import { formatClock, formatDate } from '../labels';
 
 const DAY_MS = 86_400_000;
 
@@ -12,10 +14,22 @@ function sameDay(a: Date, b: Date) {
   return a.toDateString() === b.toDateString();
 }
 
-export function Home({ plan, schedule, equipment, profile, history, onStart, onPlan }: { plan: Plan; schedule: Schedule; equipment: Equipment; profile: Profile; history: WorkoutRecord[]; onStart: (index: number) => void; onPlan: () => void }) {
+interface Props {
+  plan: Plan;
+  schedule: Schedule;
+  equipment: Equipment;
+  profile: Profile;
+  history: WorkoutRecord[];
+  active: ActiveWorkout | null;
+  onStart: (index: number) => void;
+  onResume: () => void;
+  onPlan: () => void;
+}
+
+export function Home({ plan, schedule, equipment, profile, history, active, onStart, onResume, onPlan }: Props) {
   const now = new Date();
   const index = nextSessionIndex(plan, history);
-  const session = plan.sessions[index];
+  const session = active?.session ?? plan.sessions[index];
   const steps = buildTimeline(session);
   const minutes = Math.round(totalDuration(steps) / 60);
   const kcal = Math.round(estimateKcal(steps, profile.weightKg) / 10) * 10;
@@ -24,8 +38,16 @@ export function Home({ plan, schedule, equipment, profile, history, onStart, onP
   const plannedToday = schedule.days.includes(weekday(now));
   const week = Math.floor((now.getTime() - new Date(plan.createdAt).getTime()) / (7 * DAY_MS)) + 1;
 
-  const title = doneToday ? 'Fatto per oggi' : plannedToday ? 'Oggi' : 'Giorno libero';
-  const lead = doneToday ? 'Bel lavoro. Il prossimo allenamento è questo.' : plannedToday ? null : 'Oggi non era in programma, ma se hai voglia il prossimo allenamento è pronto.';
+  const paused = active && activeInfo(active);
+
+  const title = paused ? 'In pausa' : doneToday ? 'Fatto per oggi' : plannedToday ? 'Oggi' : 'Giorno libero';
+  const lead = paused
+    ? 'Hai lasciato un allenamento a metà. Riprendi da dove eri rimasto.'
+    : doneToday
+      ? 'Bel lavoro. Il prossimo allenamento è questo.'
+      : plannedToday
+        ? null
+        : 'Oggi non era in programma, ma se hai voglia il prossimo allenamento è pronto.';
 
   return (
     <main class="screen">
@@ -42,23 +64,38 @@ export function Home({ plan, schedule, equipment, profile, history, onStart, onP
       </div>
 
       <section class="card">
-        <div class="eyebrow">
-          Allenamento {session.letter}, settimana {Math.min(week, plan.weeks)} di {plan.weeks}
-        </div>
+        <div class="eyebrow">{paused ? `Allenamento ${session.letter}, fermo a: ${paused.where.toLowerCase()}` : `Allenamento ${session.letter}, settimana ${Math.min(week, plan.weeks)} di ${plan.weeks}`}</div>
         <h2 class="title-l" style={{ marginTop: 3 }}>
           {session.title}
         </h2>
-        <div class="kpi">
-          <div>
-            <b>{minutes} min</b>durata
+        {active && paused ? (
+          <div class="kpi">
+            <div>
+              <b>{formatClock(active.totals.activeSec)}</b>fatti di {minutes} min
+            </div>
+            <div>
+              <b>
+                {active.totals.workDone.length}/{paused.setsTotal}
+              </b>
+              serie
+            </div>
+            <div>
+              <b>{Math.round(active.totals.kcal)}</b>kcal finora
+            </div>
           </div>
-          <div>
-            <b>{session.main.length}</b>esercizi
+        ) : (
+          <div class="kpi">
+            <div>
+              <b>{minutes} min</b>durata
+            </div>
+            <div>
+              <b>{session.main.length}</b>esercizi
+            </div>
+            <div>
+              <b>~{kcal}</b>kcal
+            </div>
           </div>
-          <div>
-            <b>~{kcal}</b>kcal
-          </div>
-        </div>
+        )}
         <div class="week">
           <div class="t">
             <b>Questa settimana</b>
@@ -72,9 +109,9 @@ export function Home({ plan, schedule, equipment, profile, history, onStart, onP
         </div>
       </section>
 
-      <button type="button" class="btn" onClick={() => onStart(index)}>
+      <button type="button" class="btn" onClick={() => (active ? onResume() : onStart(index))}>
         <span class="play" />
-        Inizia allenamento
+        {active ? 'Riprendi allenamento' : 'Inizia allenamento'}
       </button>
 
       {week > plan.weeks && (

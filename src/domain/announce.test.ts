@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { announcement } from './announce';
 import { buildTimeline } from './timeline';
-import { equipment } from './__fixtures__';
+import { equipment, weights } from './__fixtures__';
 import type { SessionTemplate } from './types';
 
 const session: SessionTemplate = {
@@ -53,6 +53,15 @@ describe('announcement', () => {
     expect(at((i) => steps[i].kind === 'rest' && steps[i].next?.exerciseId === 'pushup-piatt-petto')).toBe(
       'Riposo, 60 secondi. Poi push-up su piattaforma, petto: maniglie sul rosso.',
     );
+  });
+
+  it('tells which weight to pick', () => {
+    const withCurl: SessionTemplate = {
+      ...session,
+      warmup: [],
+      main: [{ exerciseId: 'curl-manubri', sets: 1, reps: 10, repRange: [8, 12], restSec: 45, weightId: 'w-manubri-10' }],
+    };
+    expect(announcement(buildTimeline(withCurl), 0, { ...equipment, weights })).toBe('Preparati. Si parte con curl con manubri: manubri da 10 chili.');
   });
 
   it('announces holds in seconds', () => {

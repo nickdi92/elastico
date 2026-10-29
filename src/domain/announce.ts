@@ -1,13 +1,17 @@
 import { COLORS, bandColor } from './colors';
 import { getExercise } from './exercises';
+import { findWeight } from './loads';
 import type { Equipment, Step } from './types';
 
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** Cosa prendere in mano per l'esercizio: elastico o posizione delle maniglie. */
-function gearHint(exerciseId: string, bandId: string | undefined, equipment: Equipment): string {
+/** Cosa prendere in mano per l'esercizio: elastico, peso o posizione delle maniglie. */
+function gearHint(next: NonNullable<Step['next']>, equipment: Equipment): string {
+  const { exerciseId, bandId } = next;
   const band = bandColor(equipment, bandId);
   if (band) return `: prendi l’elastico ${COLORS[band].name.toLowerCase()}`;
+  const weight = findWeight(equipment, next.weightId);
+  if (weight) return `: ${weight.name.toLowerCase()} da ${weight.kg.toLocaleString('it-IT')} chili`;
   const zone = getExercise(exerciseId).platformZone;
   if (zone && equipment.platform) return `: maniglie sul ${COLORS[equipment.platform.zoneColors[zone]].name.toLowerCase()}`;
   return '';
@@ -43,7 +47,7 @@ export function announcement(steps: Step[], index: number, equipment: Equipment)
   }
 
   const next = step.next!;
-  const hint = gearHint(next.exerciseId, next.bandId, equipment);
+  const hint = gearHint(next, equipment);
   if (isGetReady(steps, index)) return `Preparati. Si parte con ${lowerFirst(next.name)}${hint}.`;
   const rest = `Riposo, ${step.durationSec} secondi.`;
   if (prev?.exerciseId === next.exerciseId) return rest;

@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import type { Profile } from '../../domain/types';
 import type { Settings as SettingsData } from '../../services/storage';
 import { Sheet, Toggle } from '../components/controls';
-import { EXPERIENCE_OPTIONS, GOAL_OPTIONS, LIMITATION_OPTIONS, SEX_OPTIONS } from '../labels';
+import { EXPERIENCE_OPTIONS, GOAL_OPTIONS, LIMITATION_OPTIONS, SEX_OPTIONS, joinList, muscleName } from '../labels';
 
 const label = <T extends string>(options: [T, string][], v: T) => options.find(([k]) => k === v)?.[1] ?? v;
 
@@ -22,6 +22,11 @@ export function Settings({ profile, settings, onSettings, onEdit, onReset }: { p
         <div class="row">
           Obiettivo<span class="r">{label(GOAL_OPTIONS, profile.goal)}</span>
         </div>
+        {profile.focus.length > 0 && (
+          <div class="row">
+            Far crescere<span class="r">{joinList(profile.focus.map((m) => muscleName(m).toLowerCase()))}</span>
+          </div>
+        )}
         <div class="row">
           Ti alleni<span class="r">{label(EXPERIENCE_OPTIONS, profile.experience).toLowerCase()}</span>
         </div>

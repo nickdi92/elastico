@@ -2,10 +2,12 @@ import { useEffect, useState } from 'preact/hooks';
 import { COLORS } from '../../domain/colors';
 import { getExercise } from '../../domain/exercises';
 import { guideFor } from '../../domain/guides';
+import { findWeight, formatKg } from '../../domain/loads';
 import { describeDose } from '../../domain/timeline';
 import type { Equipment, Prescription } from '../../domain/types';
 import { ILLUSTRATIONS, illustrationSvg } from '../illustrations';
 import { resistanceLabel } from '../labels';
+import { WeightTag } from './Equipment';
 import { BandLoop, IconClose, PlatformIcon } from './icons';
 
 const FRAME_MS = 1400;
@@ -66,6 +68,7 @@ export function ExerciseSheet({ exerciseId, prescription, equipment, onClose }: 
   const ex = getExercise(exerciseId);
   const guide = guideFor(exerciseId);
   const band = prescription?.bandId ? equipment.bands.find((b) => b.id === prescription.bandId) : undefined;
+  const weight = findWeight(equipment, prescription?.weightId);
   const zone = ex.platformZone && equipment.platform ? equipment.platform.zoneColors[ex.platformZone] : undefined;
   const easyDose = ex.unilateral ? '30 secondi per lato' : '40 secondi';
 
@@ -99,6 +102,12 @@ export function ExerciseSheet({ exerciseId, prescription, equipment, onClose }: 
             <div>
               <BandLoop color={COLORS[band.color].hex} />
               Elastico {COLORS[band.color].name.toLowerCase()}, {resistanceLabel(band.kg)}
+            </div>
+          )}
+          {weight && (
+            <div>
+              <WeightTag kg={weight.kg} />
+              {weight.name}, {formatKg(weight.kg)}
             </div>
           )}
           {zone && (

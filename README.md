@@ -1,7 +1,8 @@
 # Elastico
 
-Web app (PWA) per allenarsi in camper o a casa con elastici, piattaforma per push-up e poco altro.
-Chiede profilo, tempo disponibile e attrezzatura, genera un piano di 6 settimane e guida ogni
+Web app (PWA) per allenarsi in camper o a casa con elastici, piattaforma per push-up, pesi di ogni
+tipo e corpo libero. Chiede profilo, obiettivo (anche i muscoli da far crescere), tempo disponibile
+e attrezzatura, genera un piano di 6 settimane e guida ogni
 allenamento con timer, voce e suoni. Legge il battito da un cardiofrequenzimetro Bluetooth quando
 il browser lo permette, altrimenti stima le calorie.
 
@@ -35,10 +36,19 @@ in HTTPS (o su `localhost`); la build usa percorsi relativi, quindi funziona in 
   decidono serie, ripetizioni e recuperi; la durata decide quanti esercizi entrano. Gli esercizi
   sono scelti dalla libreria (`src/domain/exercises.ts`) escludendo quelli incompatibili con le
   limitazioni, l'attrezzatura e lo spazio (dentro il camper niente salti né affondi in camminata).
-- **Elastici**: ogni esercizio ha un carico (leggero, medio, pesante) che viene abbinato agli
-  elastici dell'utente ordinati per resistenza. I colori servono solo a riconoscerli.
+- **Muscoli da far crescere** (`src/domain/muscles.ts`): oltre all'obiettivo generale si possono
+  scegliere fino a 4 muscoli. Ogni sessione parte con un esercizio per ognuno (al massimo il 60%
+  degli esercizi, a rotazione), con 8–12 ripetizioni; il resto del corpo fa una serie in meno ma
+  non sparisce. Il piano mostra le serie a settimana per muscolo rispetto alla soglia di 10.
+- **Elastici e pesi** (`src/domain/loads.ts`): ogni esercizio ha un carico (leggero, medio,
+  pesante) che viene abbinato agli elastici o ai pesi dell'utente ordinati per chili. Un peso può
+  essere qualsiasi cosa (manubri, kettlebell, palla medica, uno zaino): conta come si impugna
+  (in una mano, per la maniglia, a due mani al petto), che decide quali esercizi ci si fanno.
+- **Corpo libero**: con l'interruttore acceso una parte degli esercizi (qualcuno, un terzo, metà)
+  viene scelta a corpo libero e alternata a quelli con gli attrezzi.
 - **Progressione** (`src/domain/progression.ts`): a fine allenamento "troppo facile" aggiunge
-  ripetizioni e poi passa all'elastico più forte, "giusta" aggiunge una ripetizione, "troppo dura"
+  ripetizioni e poi passa all'elastico più forte o al peso più pesante (tenuto allo stesso modo),
+  "giusta" aggiunge una ripetizione, "troppo dura"
   alleggerisce. Si sale solo se è stato fatto almeno il 70% delle serie.
 - **Calorie** (`src/domain/calories.ts`): con il battito si usa Keytel et al. 2005; senza, MET
   (Compendium of Physical Activities) × peso × durata.

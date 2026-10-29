@@ -1,6 +1,6 @@
 import type { ActiveWorkout } from '../domain/activeWorkout';
 import { pause } from '../domain/player';
-import type { Equipment, Plan, Profile, Schedule, WorkoutRecord } from '../domain/types';
+import type { Equipment, Gear, Plan, Profile, Schedule, WorkoutRecord } from '../domain/types';
 
 const KEY = 'elastico:v1';
 /** Chiave separata: l'allenamento in corso si salva spesso, senza riscrivere tutto lo stato. */
@@ -33,12 +33,35 @@ export const DEFAULT_STATE: AppState = {
   settings: { voice: true, sounds: true, repTicks: true },
 };
 
+/** Dati salvati prima di pesi, muscoli da far crescere e corpo libero. */
+function upgradeProfile(p: Profile | null | undefined): Profile | null {
+  return p ? { ...p, focus: p.focus ?? [] } : null;
+}
+
+function upgradeEquipment(e: Equipment | null | undefined): Equipment | null {
+  if (!e) return null;
+  // Prima i manubri erano solo una casella da spuntare, senza peso.
+  const hadDumbbells = (e.gear as string[]).includes('manubri');
+  return {
+    ...e,
+    gear: e.gear.filter((g) => (g as string) !== 'manubri') as Gear[],
+    weights: e.weights ?? (hadDumbbells ? [{ id: 'w-manubri', name: 'Manubri', use: 'manubri', kg: 5 }] : []),
+    bodyweight: e.bodyweight ?? 'off',
+  };
+}
+
 export function parseState(raw: string | null): AppState {
   if (!raw) return DEFAULT_STATE;
   try {
     const data = JSON.parse(raw) as Partial<AppState>;
     if (data.version !== VERSION) return DEFAULT_STATE;
-    return { ...DEFAULT_STATE, ...data, settings: { ...DEFAULT_STATE.settings, ...data.settings } };
+    return {
+      ...DEFAULT_STATE,
+      ...data,
+      profile: upgradeProfile(data.profile),
+      equipment: upgradeEquipment(data.equipment),
+      settings: { ...DEFAULT_STATE.settings, ...data.settings },
+    };
   } catch {
     return DEFAULT_STATE;
   }

@@ -1,4 +1,4 @@
-import type { Band, Equipment, Profile, Schedule } from './types';
+import type { Band, Equipment, Profile, Schedule, Weight } from './types';
 
 export const profile: Profile = {
   sex: 'M',
@@ -7,6 +7,7 @@ export const profile: Profile = {
   weightKg: 76,
   experience: 'intermedio',
   goal: 'tonificare',
+  focus: [],
   limitations: [],
 };
 
@@ -21,8 +22,17 @@ export const bands: Band[] = [
 export const equipment: Equipment = {
   bands,
   platform: { zoneColors: { petto: 'rosso', spalle: 'blu', tricipiti: 'verde', dorso: 'giallo' } },
+  weights: [],
   gear: ['tappetino', 'gradino'],
+  bodyweight: 'off',
   place: 'dentro',
 };
 
-export const bareEquipment: Equipment = { bands: [], platform: null, gear: [], place: 'dentro' };
+export const weights: Weight[] = [
+  { id: 'w-manubri-4', name: 'Manubri', use: 'manubri', kg: 4 },
+  { id: 'w-manubri-10', name: 'Manubri', use: 'manubri', kg: 10 },
+  { id: 'w-kettlebell', name: 'Kettlebell', use: 'kettlebell', kg: 8 },
+  { id: 'w-zaino', name: 'Zaino con libri', use: 'peso', kg: 6 },
+];
+
+export const bareEquipment: Equipment = { bands: [], platform: null, weights: [], gear: [], bodyweight: 'off', place: 'dentro' };

@@ -1,4 +1,4 @@
-import type { Experience, Gear, Goal, Limitation, Place, PlatformZone, Sex } from '../domain/types';
+import type { BodyweightMix, Experience, Gear, Goal, Limitation, Muscle, Place, PlatformZone, Sex, WeightUse } from '../domain/types';
 
 export const SEX_OPTIONS: [Sex, string][] = [
   ['M', 'Uomo'],
@@ -15,10 +15,41 @@ export const EXPERIENCE_OPTIONS: [Experience, string][] = [
 export const GOAL_OPTIONS: [Goal, string][] = [
   ['dimagrire', 'Dimagrire'],
   ['tonificare', 'Tonificare'],
+  ['muscolo', 'Mettere muscolo'],
   ['forza', 'Forza'],
   ['resistenza', 'Resistenza'],
   ['mobilita', 'Mobilità'],
 ];
+
+/** Cosa vuol dire ogni obiettivo nel piano (gli stessi numeri del planner). */
+export const GOAL_HINTS: Record<Goal, string> = {
+  dimagrire: 'Dimagrire: 12–20 ripetizioni, recuperi brevi e un po’ di cardio in mezzo.',
+  tonificare: 'Tonificare: 10–15 ripetizioni, recuperi da un minuto, corpo asciutto e sodo.',
+  muscolo: 'Mettere muscolo: 8–12 ripetizioni vicino al limite, recuperi più lunghi.',
+  forza: 'Forza: 6–10 ripetizioni con il carico più duro che hai, recuperi lunghi.',
+  resistenza: 'Resistenza: 15–20 ripetizioni, recuperi brevi, fiato e tenuta.',
+  mobilita: 'Mobilità: più riscaldamento e allungamenti, carichi leggeri.',
+};
+
+export const MUSCLE_OPTIONS: [Muscle, string][] = [
+  ['petto', 'Petto'],
+  ['spalle', 'Spalle'],
+  ['bicipiti', 'Bicipiti'],
+  ['tricipiti', 'Tricipiti'],
+  ['dorso', 'Dorso'],
+  ['addominali', 'Addominali'],
+  ['glutei', 'Glutei'],
+  ['gambe', 'Gambe'],
+];
+
+export function muscleName(m: Muscle): string {
+  return MUSCLE_OPTIONS.find(([k]) => k === m)![1];
+}
+
+/** "petto, spalle e bicipiti" */
+export function joinList(items: string[]): string {
+  return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} e ${items[items.length - 1]}`;
+}
 
 export const LIMITATION_OPTIONS: [Limitation, string][] = [
   ['schiena', 'Schiena'],
@@ -32,8 +63,32 @@ export const GEAR_OPTIONS: [Gear, string][] = [
   ['ancoraggio', 'Ancoraggio porta'],
   ['gradino', 'Gradino o sedia'],
   ['sbarra', 'Sbarra trazioni'],
-  ['manubri', 'Manubri'],
   ['trx', 'TRX o anelli'],
+];
+
+/** Pesi già pronti da scegliere; "Altro" lascia scrivere il nome e dire come si impugna. */
+export const WEIGHT_KINDS: { key: string; name: string; use: WeightUse }[] = [
+  { key: 'manubri', name: 'Manubri', use: 'manubri' },
+  { key: 'kettlebell', name: 'Kettlebell', use: 'kettlebell' },
+  { key: 'palla', name: 'Palla medica', use: 'peso' },
+];
+
+export const WEIGHT_USE_OPTIONS: [WeightUse, string][] = [
+  ['manubri', 'In una mano'],
+  ['kettlebell', 'Per la maniglia'],
+  ['peso', 'Al petto'],
+];
+
+export const WEIGHT_USE_HINTS: Record<WeightUse, string> = {
+  manubri: 'Come un manubrio: curl, alzate, rematore, spinte.',
+  kettlebell: 'Come un kettlebell: swing, stacco, spinta a un braccio, goblet squat.',
+  peso: 'A due mani al petto: goblet squat, affondi, pullover, russian twist.',
+};
+
+export const BODYWEIGHT_OPTIONS: [Exclude<BodyweightMix, 'off'>, string][] = [
+  ['qualcuno', 'Qualcuno'],
+  ['terzo', 'Un terzo'],
+  ['meta', 'Metà'],
 ];
 
 export const PLACE_OPTIONS: [Place, string][] = [

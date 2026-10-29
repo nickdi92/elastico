@@ -1,13 +1,27 @@
 import { COLORS, bandColor } from '../../domain/colors';
 import { getExercise } from '../../domain/exercises';
+import { formatKg } from '../../domain/loads';
 import type { Equipment, Gear, SessionTemplate } from '../../domain/types';
 import { GEAR_OPTIONS, resistanceLabel } from '../labels';
 import { BandLoop, PlatformIcon } from './icons';
 
-/** Cosa serve per una sessione: elastici (dal più leggero), piattaforma, altri attrezzi. */
+/** Il peso scritto in grande, come le cifre del resto dell'app. `outline` per gli sfondi colorati dell'allenamento. */
+export function WeightTag({ kg, size = 30, outline }: { kg: number; size?: number; outline?: boolean }) {
+  const text = kg.toLocaleString('it-IT', { maximumFractionDigits: 1 });
+  return (
+    <span class={`wtag${outline ? ' outline' : ''}`} style={{ width: size, height: size, fontSize: (size * (text.length > 2 ? 0.42 : 0.56)).toFixed(1) + 'px' }} aria-hidden="true">
+      <b>{text}</b>
+      <small>kg</small>
+    </span>
+  );
+}
+
+/** Cosa serve per una sessione: elastici (dal più leggero), pesi, piattaforma, altri attrezzi. */
 export function NeededList({ session, equipment }: { session: SessionTemplate; equipment: Equipment }) {
   const bandIds = new Set(session.main.map((p) => p.bandId).filter(Boolean));
   const bands = equipment.bands.filter((b) => bandIds.has(b.id)).sort((a, b) => a.kg - b.kg);
+  const weightIds = new Set(session.main.map((p) => p.weightId).filter(Boolean));
+  const weights = equipment.weights.filter((w) => weightIds.has(w.id)).sort((a, b) => a.kg - b.kg);
   const exercises = session.main.map((p) => getExercise(p.exerciseId));
   const platformZones = [...new Set(exercises.map((e) => e.platformZone).filter(Boolean))];
   const gear = new Set<Gear>();
@@ -20,6 +34,13 @@ export function NeededList({ session, equipment }: { session: SessionTemplate; e
           <BandLoop color={COLORS[b.color].hex} tilt={i % 2 ? 10 : -12} />
           Elastico {COLORS[b.color].name.toLowerCase()}
           <span class="r">{resistanceLabel(b.kg)}</span>
+        </div>
+      ))}
+      {weights.map((w) => (
+        <div class="row" key={w.id}>
+          <WeightTag kg={w.kg} />
+          {w.name}
+          <span class="r">{formatKg(w.kg)}</span>
         </div>
       ))}
       {platformZones.length > 0 && equipment.platform && (
@@ -35,7 +56,7 @@ export function NeededList({ session, equipment }: { session: SessionTemplate; e
           {label}
         </div>
       ))}
-      {bands.length === 0 && platformZones.length === 0 && gear.size === 0 && (
+      {bands.length === 0 && weights.length === 0 && platformZones.length === 0 && gear.size === 0 && (
         <div class="row">
           <span style={{ width: 30 }} />
           Solo il tuo corpo

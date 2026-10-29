@@ -41,7 +41,7 @@ export function App() {
 
   const complete = (p: Profile, s: Schedule, e: Equipment) => {
     const fresh = generatePlan(p, s, e);
-    const next = state.plan ? carryProgress(state.plan, fresh, e.bands) : fresh;
+    const next = state.plan ? carryProgress(state.plan, fresh, e) : fresh;
     setState((st) => ({ ...st, profile: p, schedule: s, equipment: e, plan: next }));
     setRoute({ name: 'plan', fresh: true });
   };
@@ -115,7 +115,7 @@ export function App() {
           setState((st) => ({
             ...st,
             history: upsertRecord(st.history, record),
-            plan: feedback && st.plan && st.equipment ? applyFeedback(st.plan, record.sessionId, feedback, st.equipment.bands) : st.plan,
+            plan: feedback && st.plan && st.equipment ? applyFeedback(st.plan, record.sessionId, feedback, st.equipment) : st.plan,
           }));
           setRoute({ name: 'home' });
         }}
@@ -124,7 +124,7 @@ export function App() {
   }
 
   if (route.name === 'plan' && route.fresh) {
-    return <PlanView plan={plan} schedule={schedule} equipment={equipment} fresh onHome={() => setRoute({ name: 'home' })} onEdit={() => {}} onRegenerate={() => {}} />;
+    return <PlanView plan={plan} schedule={schedule} equipment={equipment} focus={profile.focus} fresh onHome={() => setRoute({ name: 'home' })} onEdit={() => {}} onRegenerate={() => {}} />;
   }
 
   const tab: Tab = route.name;
@@ -151,11 +151,12 @@ export function App() {
           plan={plan}
           schedule={schedule}
           equipment={equipment}
+          focus={profile.focus}
           fresh={false}
           onHome={() => setRoute({ name: 'home' })}
           onEdit={() => setRoute({ name: 'onboarding' })}
           onRegenerate={() => {
-            const next = carryProgress(plan, generatePlan(profile, schedule, equipment, new Date(), plan), equipment.bands);
+            const next = carryProgress(plan, generatePlan(profile, schedule, equipment, new Date(), plan), equipment);
             setState((st) => ({ ...st, plan: next }));
             setRoute({ name: 'plan', fresh: true });
           }}

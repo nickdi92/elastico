@@ -5,6 +5,7 @@ import { announcement, isGetReady } from '../../domain/announce';
 import { kcalPerSecond } from '../../domain/calories';
 import { COLORS, bandColor, stepTheme } from '../../domain/colors';
 import { getExercise } from '../../domain/exercises';
+import { findWeight, formatKg } from '../../domain/loads';
 import {
   type PlayerState,
   addTime,
@@ -27,6 +28,7 @@ import { allowSleep, keepAwake } from '../../services/wakeLock';
 import { Sheet } from '../components/controls';
 import { ExerciseSheet, type ExerciseSheetTarget } from '../components/ExerciseSheet';
 import { useHr } from '../components/HeartRate';
+import { WeightTag } from '../components/Equipment';
 import { BandLoop, IconClose, IconInfo, IconNext, IconPause, IconPlay, IconPrev, PlatformIcon } from '../components/icons';
 import { formatClock } from '../labels';
 
@@ -326,6 +328,7 @@ export function Workout({ session, saved, profile, equipment, settings, onFinish
     const next = step.next!;
     const sameExercise = steps[s.index - 1]?.kind === 'work' && steps[s.index - 1].exerciseId === next.exerciseId;
     const nextBand = bandColor(equipment, next.bandId);
+    const nextWeight = findWeight(equipment, next.weightId);
     const nextZone = getExercise(next.exerciseId).platformZone;
     const zoneColor = nextZone && equipment.platform ? equipment.platform.zoneColors[nextZone] : undefined;
     body = (
@@ -355,10 +358,17 @@ export function Workout({ session, saved, profile, equipment, settings, onFinish
           </div>
           <div class="nn">
             <span>{next.name}</span>
-            {nextBand ? <BandLoop color={COLORS[nextBand].hex} size={34} /> : zoneColor ? <PlatformIcon handles={zoneColor} size={34} board={theme.text} /> : null}
+            {nextBand ? (
+              <BandLoop color={COLORS[nextBand].hex} size={34} />
+            ) : nextWeight ? (
+              <WeightTag kg={nextWeight.kg} size={34} outline />
+            ) : zoneColor ? (
+              <PlatformIcon handles={zoneColor} size={34} board={theme.text} />
+            ) : null}
           </div>
           <div class="s">
             {nextBand && `Elastico ${COLORS[nextBand].name.toLowerCase()}, `}
+            {nextWeight && `${nextWeight.name} ${formatKg(nextWeight.kg)}, `}
             {zoneColor && `Maniglie sul ${COLORS[zoneColor].name.toLowerCase()}, `}
             {next.detail}
           </div>
@@ -373,6 +383,7 @@ export function Workout({ session, saved, profile, equipment, settings, onFinish
     );
   } else {
     const band = bandColor(equipment, step.bandId);
+    const weight = step.kind === 'work' ? findWeight(equipment, step.weightId) : undefined;
     const zone = step.kind === 'work' && ex.platformZone && equipment.platform ? equipment.platform.zoneColors[ex.platformZone] : undefined;
     const rep = currentRep(step, el);
     const side = step.sides === 2 ? `, ${sideLabel(step, el)}` : '';
@@ -392,13 +403,18 @@ export function Workout({ session, saved, profile, equipment, settings, onFinish
             <BandLoop color={theme.text} size={26} stroke={3.4} />
             Elastico {COLORS[band].name.toLowerCase()}
           </div>
+        ) : weight ? (
+          <div class="w-chip glass">
+            <WeightTag kg={weight.kg} size={28} outline />
+            {weight.name} {formatKg(weight.kg)}
+          </div>
         ) : zone ? (
           <div class="w-chip glass">
             <PlatformIcon handles={zone} size={28} board={theme.text} />
             Maniglie sul {COLORS[zone].name.toLowerCase()}, zona {ex.platformZone}
           </div>
         ) : null}
-        <h1 class="w-name" style={{ fontSize: nameSize(step.name), marginTop: band || zone ? 10 : 18 }}>
+        <h1 class="w-name" style={{ fontSize: nameSize(step.name), marginTop: band || weight || zone ? 10 : 18 }}>
           {step.name}
         </h1>
         <div class="w-timer">{formatClock(rem)}</div>

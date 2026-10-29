@@ -1,20 +1,30 @@
 import { useState } from 'preact/hooks';
 import { COLORS, COLOR_IDS } from '../../domain/colors';
+import { formatKg } from '../../domain/loads';
+import { MAX_FOCUS } from '../../domain/muscles';
 import { suggestDays } from '../../domain/schedule';
-import type { Band, ColorId, Equipment, Gear, Limitation, PlatformZone, Profile, Schedule, Sex } from '../../domain/types';
+import type { Band, ColorId, Equipment, Gear, Limitation, PlatformZone, Profile, Schedule, Sex, Weight } from '../../domain/types';
+import { WeightTag } from '../components/Equipment';
+import { WeightSheet } from '../components/WeightSheet';
 import { Chips, NumberField, Seg, Toggle } from '../components/controls';
 import { BandLoop, IconTrash } from '../components/icons';
 import {
+  BODYWEIGHT_OPTIONS,
   DAY_SHORT,
   EXPERIENCE_OPTIONS,
   GEAR_OPTIONS,
+  GOAL_HINTS,
   GOAL_OPTIONS,
   LIMITATION_OPTIONS,
   MINUTES_OPTIONS,
+  MUSCLE_OPTIONS,
   PLACE_OPTIONS,
   RESISTANCES,
   SEX_OPTIONS,
+  WEIGHT_USE_OPTIONS,
   ZONE_OPTIONS,
+  joinList,
+  muscleName,
 } from '../labels';
 
 type DraftProfile = Omit<Profile, 'sex'> & { sex: Sex | '' };
@@ -32,6 +42,7 @@ const DEFAULT_PROFILE: DraftProfile = {
   weightKg: 75,
   experience: 'intermedio',
   goal: 'tonificare',
+  focus: [],
   limitations: [],
 };
 
@@ -42,9 +53,13 @@ const DEFAULT_EQUIPMENT: Equipment = {
     { id: 'b3', color: 'viola', kg: 20 },
   ],
   platform: { zoneColors: { petto: 'rosso', spalle: 'blu', tricipiti: 'verde', dorso: 'giallo' } },
+  weights: [],
   gear: ['tappetino'],
+  bodyweight: 'terzo',
   place: 'dentro',
 };
+
+const STEPS = 4;
 
 const PLATFORM_COLORS: ColorId[] = ['rosso', 'blu', 'verde', 'giallo', 'arancione', 'viola', 'nero', 'grigio'];
 
@@ -54,6 +69,12 @@ function toggle<T>(list: T[], v: T): T[] {
 
 function inRange(v: number, min: number, max: number) {
   return Number.isFinite(v) && v >= min && v <= max;
+}
+
+/** Come si tiene un peso con un nome scelto dall'utente, per ricordarlo nella lista. */
+function weightDetail(w: Weight): string {
+  const how = WEIGHT_USE_OPTIONS.find(([u]) => u === w.use)![1].toLowerCase();
+  return w.use === 'manubri' && w.name === 'Manubri' ? `${formatKg(w.kg)} ciascuno` : `${formatKg(w.kg)}, ${how}`;
 }
 
 function structureText(n: number): string {
@@ -66,12 +87,14 @@ function Header({ step, title, lead }: { step: number; title: string; lead?: str
   return (
     <>
       <div class="steps" aria-hidden="true">
-        {[1, 2, 3].map((i) => (
+        {Array.from({ length: STEPS }, (_, k) => k + 1).map((i) => (
           <i key={i} class={i <= step ? 'on' : ''} />
         ))}
       </div>
       <div>
-        <div class="date">Passo {step} di 3</div>
+        <div class="date">
+          Passo {step} di {STEPS}
+        </div>
         <h1 class="title-xl" style={{ marginTop: 4 }}>
           {title}
         </h1>
@@ -91,6 +114,8 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
   const [schedule, setSchedule] = useState<Schedule>(initial.schedule ?? { sessionsPerWeek: 3, minutes: 30, days: suggestDays(3) });
   const [equipment, setEquipment] = useState<Equipment>(initial.equipment ?? DEFAULT_EQUIPMENT);
   const [adding, setAdding] = useState(false);
+  /** Peso aperto nel foglio: 'new' per aggiungerne uno. */
+  const [weightOpen, setWeightOpen] = useState<Weight | 'new' | null>(null);
 
   const go = (n: number) => {
     setStep(n);
@@ -118,10 +143,6 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
           <Seg label="Esperienza" options={EXPERIENCE_OPTIONS} value={p.experience} onChange={(experience) => set({ experience })} />
         </div>
         <div class="field">
-          <span class="label">Obiettivo principale</span>
-          <Chips label="Obiettivo" options={GOAL_OPTIONS} selected={[p.goal]} onToggle={(goal) => set({ goal })} />
-        </div>
-        <div class="field">
           <span class="label">Dolori o limitazioni</span>
           <Chips<Limitation> label="Limitazioni" options={LIMITATION_OPTIONS} selected={p.limitations} onToggle={(l) => set({ limitations: toggle(p.limitations, l) })} />
           <span class="hint">Togliamo gli esercizi che caricano queste zone. Con un dolore acuto o recente, senti prima un medico.</span>
@@ -141,13 +162,60 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
   }
 
   if (step === 2) {
+    const p = profile;
+    const set = (patch: Partial<DraftProfile>) => setProfile({ ...p, ...patch });
+    const reps = p.goal === 'forza' ? '6–10' : '8–12';
+    return (
+      <main class="screen no-tabs">
+        <Header step={2} title="Il tuo obiettivo" lead="Uno per tutto il corpo, più i muscoli su cui vuoi insistere." />
+        <div class="field">
+          <span class="label">Per tutto il corpo</span>
+          <Chips label="Obiettivo" options={GOAL_OPTIONS} selected={[p.goal]} onToggle={(goal) => set({ goal })} />
+          <span class="hint">{GOAL_HINTS[p.goal]}</span>
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <span class="label">Muscoli da far crescere</span>
+            <span class="hint">facoltativo, fino a {MAX_FOCUS}</span>
+          </div>
+          <div class="focus-grid" role="group" aria-label="Muscoli da far crescere">
+            {MUSCLE_OPTIONS.map(([m, name]) => {
+              const on = p.focus.includes(m);
+              return (
+                <button type="button" key={m} aria-pressed={on} disabled={!on && p.focus.length >= MAX_FOCUS} onClick={() => set({ focus: toggle(p.focus, m) })}>
+                  <span class="tick" aria-hidden="true" />
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+          {p.focus.length >= MAX_FOCUS && <span class="hint">Se insisti su tutto non insisti su niente: per sceglierne un altro, togline uno.</span>}
+        </div>
+        {p.focus.length > 0 && (
+          <div class="card note" style={{ padding: 14 }}>
+            <b style={{ color: 'var(--text)' }}>Cosa cambia nel piano.</b> Più lavoro per {joinList(p.focus.map((m) => muscleName(m).toLowerCase()))}: più esercizi, messi all'inizio quando sei fresco, con {reps} ripetizioni. Il resto del corpo resta tonico con una serie in meno.
+          </div>
+        )}
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button type="button" class="btn" onClick={() => go(3)}>
+            Avanti
+          </button>
+          <button type="button" class="link" onClick={() => go(1)}>
+            Indietro
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (step === 3) {
     const s = schedule;
     const n = s.sessionsPerWeek;
     const hours = (n * s.minutes) / 60;
     const hoursText = hours < 1 ? `${n * s.minutes} minuti` : `${hours.toLocaleString('it-IT', { maximumFractionDigits: 1 })} ${hours === 1 ? 'ora' : 'ore'}`;
     return (
       <main class="screen no-tabs">
-        <Header step={2} title="Quanto tempo hai?" lead="Meglio poco e costante che tanto ogni tanto." />
+        <Header step={3} title="Quanto tempo hai?" lead="Meglio poco e costante che tanto ogni tanto." />
         <div class="field">
           <span class="label">Allenamenti a settimana</span>
           <div class="big-nums" role="group" aria-label="Allenamenti a settimana">
@@ -184,10 +252,10 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
           <b style={{ color: 'var(--text)' }}>Circa {hoursText} a settimana.</b> {structureText(n)}
         </div>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button type="button" class="btn" disabled={s.days.length !== n} onClick={() => go(3)}>
+          <button type="button" class="btn" disabled={s.days.length !== n} onClick={() => go(4)}>
             Avanti
           </button>
-          <button type="button" class="link" onClick={() => go(1)}>
+          <button type="button" class="link" onClick={() => go(2)}>
             Indietro
           </button>
         </div>
@@ -204,10 +272,14 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
   };
   const setZone = (zone: PlatformZone, color: ColorId) =>
     e.platform && setE({ platform: { zoneColors: { ...e.platform.zoneColors, [zone]: color } } });
+  const saveWeight = (w: Weight) => {
+    setE({ weights: e.weights.some((x) => x.id === w.id) ? e.weights.map((x) => (x.id === w.id ? w : x)) : [...e.weights, w] });
+    setWeightOpen(null);
+  };
 
   return (
     <main class="screen no-tabs">
-      <Header step={3} title="Cosa hai con te?" />
+      <Header step={4} title="Cosa hai con te?" />
       <div class="field">
         <span class="label">Elastici</span>
         <div class="list">
@@ -243,6 +315,33 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
       </div>
 
       <div class="field">
+        <div class="label-row">
+          <span class="label">Pesi</span>
+          <span class="hint">qualsiasi cosa pesi</span>
+        </div>
+        <div class="list">
+          {[...e.weights]
+            .sort((a, b) => a.name.localeCompare(b.name) || a.kg - b.kg)
+            .map((w) => (
+              <button type="button" class="row weight-row" key={w.id} onClick={() => setWeightOpen(w)}>
+                <WeightTag kg={w.kg} size={34} />
+                <span>
+                  {w.name}
+                  <small>{weightDetail(w)}</small>
+                </span>
+                <span class="chev" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            ))}
+          <button type="button" class="row link" onClick={() => setWeightOpen('new')}>
+            Aggiungi peso
+          </button>
+        </div>
+        <span class="hint">Manubri, kettlebell, palla medica, una tanica d'acqua. Per ogni esercizio il piano sceglie il peso giusto e ti dice quale prendere.</span>
+      </div>
+
+      <div class="field">
         <div class="list">
           <Toggle
             label="Piattaforma per push-up"
@@ -273,6 +372,23 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
       </div>
 
       <div class="field">
+        <span class="label">Corpo libero</span>
+        <div class="list">
+          <Toggle label="Mescola esercizi a corpo libero" checked={e.bodyweight !== 'off'} onChange={(on) => setE({ bodyweight: on ? 'terzo' : 'off' })} />
+          {e.bodyweight !== 'off' && (
+            <div class="seg-row">
+              <Seg label="Quanti a corpo libero" options={BODYWEIGHT_OPTIONS} value={e.bodyweight} onChange={(bodyweight) => setE({ bodyweight })} />
+            </div>
+          )}
+        </div>
+        <span class="hint">
+          {e.bodyweight === 'off'
+            ? 'Spento: il piano usa gli attrezzi dove può, il corpo libero solo dove non c’è alternativa.'
+            : 'Flessioni, addominali, affondi, superman, alternati agli esercizi con pesi ed elastici.'}
+        </span>
+      </div>
+
+      <div class="field">
         <span class="label">Dove ti alleni</span>
         <Seg label="Luogo" options={PLACE_OPTIONS} value={e.place} onChange={(place) => setE({ place })} />
         <span class="hint">{e.place === 'dentro' ? 'Dentro: niente salti né esercizi che chiedono metri liberi.' : 'Fuori puoi fare anche salti e affondi in camminata.'}</span>
@@ -282,10 +398,25 @@ export function Onboarding({ initial, onComplete, onCancel }: { initial: Onboard
         <button type="button" class="btn" onClick={() => onComplete(profile as Profile, schedule, equipment)}>
           Crea il mio piano
         </button>
-        <button type="button" class="link" onClick={() => go(2)}>
+        <button type="button" class="link" onClick={() => go(3)}>
           Indietro
         </button>
       </div>
+      {weightOpen && (
+        <WeightSheet
+          initial={weightOpen === 'new' ? undefined : weightOpen}
+          onSave={saveWeight}
+          onDelete={
+            weightOpen === 'new'
+              ? undefined
+              : () => {
+                  setE({ weights: e.weights.filter((x) => x.id !== weightOpen.id) });
+                  setWeightOpen(null);
+                }
+          }
+          onClose={() => setWeightOpen(null)}
+        />
+      )}
     </main>
   );
 }

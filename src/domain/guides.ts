@@ -219,7 +219,7 @@ export const GUIDES: Record<string, Guide> = {
   'squat-goblet': {
     muscles: 'Cosce e glutei',
     steps: [
-      'Tieni il manubrio verticale al petto, con due mani.',
+      'Tieni il peso al petto con due mani: un manubrio in verticale, un kettlebell per le anse.',
       'Piedi un po’ più larghi delle spalle.',
       'Scendi tra le ginocchia tenendo il petto alto.',
       'Risali spingendo con i talloni.',
@@ -244,13 +244,25 @@ export const GUIDES: Record<string, Guide> = {
   'stacco-manubri': {
     muscles: 'Retro coscia, glutei e schiena',
     steps: [
-      'In piedi, manubri davanti alle cosce, ginocchia leggermente piegate.',
-      'Spingi il bacino indietro e fai scendere i manubri lungo le gambe.',
+      'In piedi, i pesi davanti alle cosce (un kettlebell a due mani), ginocchia leggermente piegate.',
+      'Spingi il bacino indietro e fai scendere i pesi lungo le gambe.',
       'Schiena dritta per tutto il tempo.',
       'Risali spingendo il bacino in avanti e stringendo i glutei.',
     ],
-    tip: 'I manubri restano vicini alle gambe.',
+    tip: 'I pesi restano vicini alle gambe.',
     photo: 'stacco-manubri',
+  },
+  swing: {
+    muscles: 'Glutei, retro coscia e fiato',
+    steps: [
+      'Piedi più larghi delle spalle, kettlebell a terra un passo davanti a te.',
+      'Afferralo a due mani, spingi il bacino indietro e fallo passare tra le gambe.',
+      'Spingi il bacino in avanti con forza: il kettlebell sale fino al petto a braccia tese.',
+      'Lascialo ricadere e accompagnalo di nuovo tra le gambe.',
+    ],
+    tip: 'Sono le anche a lanciarlo, non le braccia. Solo fuori: serve spazio sopra e davanti.',
+    photo: 'swing',
+    photoNote: 'In foto a un braccio: a due mani il movimento è lo stesso.',
   },
   'stacco-una-gamba': {
     muscles: 'Retro coscia, glutei ed equilibrio',
@@ -334,6 +346,17 @@ export const GUIDES: Record<string, Guide> = {
     tip: 'Peso sul tallone della gamba davanti, busto alto.',
     photo: 'affondo-indietro',
   },
+  'affondo-peso': {
+    muscles: 'Cosce e glutei',
+    steps: [
+      'In piedi, un manubrio per mano lungo i fianchi, oppure un peso solo al petto.',
+      'Fai un passo lungo indietro.',
+      'Scendi finché il ginocchio dietro sfiora terra.',
+      'Spingi con la gamba davanti e torna su; finite le ripetizioni cambia lato.',
+    ],
+    tip: 'Il ginocchio davanti resta sopra la caviglia.',
+    photo: 'affondo-peso',
+  },
   'step-up': {
     muscles: 'Cosce e glutei',
     steps: [
@@ -406,6 +429,40 @@ export const GUIDES: Record<string, Guide> = {
     tip: 'I gomiti sfiorano i fianchi per tutto il movimento.',
     photo: 'pushup-stretti',
     photoNote: SAME_ON_PLATFORM,
+  },
+  'pushup-larghi-corpo': {
+    muscles: 'Petto e spalle',
+    steps: [
+      'Mani a terra molto più larghe delle spalle, dita in avanti.',
+      'Corpo dritto dalla testa ai talloni (ginocchia a terra se serve).',
+      'Scendi piegando i gomiti verso l’esterno, petto verso terra.',
+      'Spingi e torna su.',
+    ],
+    tip: 'Con le mani larghe scendi un po’ meno: niente dolore alle spalle.',
+    photo: 'pushup-larghi',
+  },
+  'floor-press': {
+    muscles: 'Petto e tricipiti',
+    steps: [
+      'Sdraiato sulla schiena, ginocchia piegate e piedi a terra.',
+      'Pesi sopra il petto a braccia tese, palmi verso i piedi.',
+      'Scendi piano finché i gomiti toccano terra.',
+      'Spingi di nuovo in alto.',
+    ],
+    tip: 'Il pavimento ferma i gomiti: spalle al sicuro anche con pesi più pesanti.',
+    photo: 'floor-press',
+  },
+  'croci-manubri': {
+    muscles: 'Petto',
+    steps: [
+      'Sdraiato, ginocchia piegate, manubri sopra il petto con i palmi che si guardano.',
+      'Gomiti appena piegati e fermi così.',
+      'Apri le braccia ai lati finché i gomiti sfiorano terra.',
+      'Richiudi come per abbracciare un albero.',
+    ],
+    tip: 'Peso leggero: è il petto che lavora, non i gomiti.',
+    photo: 'croci-manubri',
+    photoNote: 'In foto su una panca: a terra il movimento è lo stesso, i gomiti si fermano al pavimento.',
   },
   'chest-press-elastico': {
     muscles: 'Petto e spalle',
@@ -483,6 +540,17 @@ export const GUIDES: Record<string, Guide> = {
     ],
     tip: 'Più i piedi sono vicini alle mani, più è difficile.',
   },
+  'press-kettlebell': {
+    muscles: 'Spalle e tricipiti',
+    steps: [
+      'In piedi, kettlebell alla spalla: la maniglia in mano, la palla appoggiata sull’avambraccio.',
+      'Addominali e glutei stretti.',
+      'Spingi verso l’alto fino a braccio teso.',
+      'Torna giù piano alla spalla; finite le ripetizioni cambia lato.',
+    ],
+    tip: 'Il polso resta dritto, non piegato all’indietro.',
+    photo: 'press-kettlebell',
+  },
   'alzate-laterali': {
     muscles: 'Spalle',
     steps: [
@@ -556,12 +624,24 @@ export const GUIDES: Record<string, Guide> = {
     muscles: 'Dorso e bicipiti',
     steps: [
       'Una mano e un ginocchio appoggiati al gradino o a una panca.',
-      'Schiena dritta, manubrio nella mano libera.',
-      'Tira il manubrio verso il fianco.',
+      'Schiena dritta, manubrio o kettlebell nella mano libera.',
+      'Tira il peso verso il fianco.',
       'Scendi piano; finite le ripetizioni cambia lato.',
     ],
     tip: 'Non ruotare il busto per tirare.',
     photo: 'rematore-manubrio',
+  },
+  'superman-tirata': {
+    muscles: 'Dorso e schiena bassa',
+    steps: [
+      'A pancia in giù, braccia tese avanti, fronte appena sollevata.',
+      'Solleva petto e braccia di qualche centimetro.',
+      'Tira i gomiti verso i fianchi stringendo le scapole, come in una trazione.',
+      'Riallunga le braccia avanti senza appoggiarle.',
+    ],
+    tip: 'Sguardo a terra: il collo resta in linea con la schiena.',
+    photo: 'superman',
+    photoNote: 'In foto il superman semplice: in più tiri i gomiti verso i fianchi.',
   },
   trazioni: {
     muscles: 'Dorso e bicipiti',
@@ -607,6 +687,18 @@ export const GUIDES: Record<string, Guide> = {
     ],
     tip: 'Petto alto e spalle basse.',
   },
+  'pullover-peso': {
+    muscles: 'Dorso e petto',
+    steps: [
+      'Sdraiato, ginocchia piegate, un peso a due mani sopra il petto.',
+      'Gomiti appena piegati e fermi così.',
+      'Porta il peso indietro sopra la testa finché lo senti tirare sotto le ascelle.',
+      'Riportalo sopra il petto.',
+    ],
+    tip: 'La schiena bassa resta appoggiata: scendi solo fin dove ci riesci.',
+    photo: 'pullover',
+    photoNote: 'In foto su una panca: a terra il movimento è lo stesso.',
+  },
   'face-pull': {
     muscles: 'Spalle e parte alta della schiena',
     steps: [
@@ -629,6 +721,17 @@ export const GUIDES: Record<string, Guide> = {
     ],
     tip: 'Stringi le scapole e tieni le braccia tese.',
     photo: 'pull-apart',
+  },
+  'alzate-posteriori': {
+    muscles: 'Spalle posteriori e parte alta della schiena',
+    steps: [
+      'Seduto sul bordo del gradino o di una sedia, petto appoggiato sulle cosce.',
+      'Manubri sotto le ginocchia, palmi che si guardano.',
+      'Apri le braccia ai lati con i gomiti appena piegati, fino all’altezza delle spalle.',
+      'Scendi piano.',
+    ],
+    tip: 'Peso leggero e niente slancio: stringi le scapole in alto.',
+    photo: 'alzate-posteriori',
   },
 
   // ---------- Braccia ----------
@@ -661,6 +764,39 @@ export const GUIDES: Record<string, Guide> = {
     tip: 'Gomiti fermi e vicini alla testa.',
     photo: 'tricipiti-elastico',
     photoNote: 'In foto da seduto: in piedi va bene uguale.',
+  },
+  'curl-martello': {
+    muscles: 'Bicipiti e avambracci',
+    steps: [
+      'In piedi, manubri lungo i fianchi con i palmi rivolti verso le gambe.',
+      'Gomiti fermi accanto al busto.',
+      'Piega i gomiti e porta i manubri alle spalle senza ruotare i polsi.',
+      'Scendi lentamente.',
+    ],
+    tip: 'Le spalle non si muovono: lavorano solo gli avambracci che salgono.',
+    photo: 'curl-martello',
+  },
+  'tricipiti-peso': {
+    muscles: 'Tricipiti',
+    steps: [
+      'In piedi, un peso a due mani sopra la testa a braccia tese.',
+      'Gomiti stretti, rivolti in avanti.',
+      'Piega i gomiti e fai scendere il peso dietro la testa.',
+      'Distendi di nuovo le braccia.',
+    ],
+    tip: 'Si muovono solo gli avambracci: i gomiti restano vicini alle orecchie.',
+    photo: 'tricipiti-peso',
+  },
+  'pushup-stretti-corpo': {
+    muscles: 'Tricipiti e petto',
+    steps: [
+      'Mani a terra sotto le spalle, corpo dritto (ginocchia a terra se serve).',
+      'Gomiti stretti lungo il corpo.',
+      'Scendi finché il petto è vicino alle mani.',
+      'Spingi e torna su.',
+    ],
+    tip: 'I gomiti sfiorano i fianchi per tutto il movimento.',
+    photo: 'pushup-stretti',
   },
   'dip-gradino': {
     muscles: 'Tricipiti',
@@ -730,6 +866,51 @@ export const GUIDES: Record<string, Guide> = {
     steps: ['Sdraiato, ginocchia piegate, piedi a terra.', 'Mani alle tempie, gomiti aperti.', 'Solleva le spalle da terra contraendo l’addome.', 'Scendi lentamente.'],
     tip: 'Non tirare la testa con le mani.',
     photo: 'crunch',
+  },
+  'crunch-inverso': {
+    muscles: 'Addominali bassi',
+    steps: [
+      'Sdraiato sulla schiena, braccia lungo i fianchi.',
+      'Ginocchia piegate a 90° sopra le anche.',
+      'Porta le ginocchia verso il petto staccando il bacino da terra.',
+      'Scendi piano senza far toccare i piedi.',
+    ],
+    tip: 'Niente slancio: sono gli addominali a sollevare il bacino.',
+    photo: 'crunch-inverso',
+  },
+  bicicletta: {
+    muscles: 'Addominali e obliqui',
+    steps: [
+      'Sdraiato, mani alle tempie, spalle sollevate da terra.',
+      'Gambe sollevate, ginocchia piegate.',
+      'Porta un gomito verso il ginocchio opposto e allunga l’altra gamba.',
+      'Cambia lato come se pedalassi; ogni lato conta una ripetizione.',
+    ],
+    tip: 'Ruota il busto, non tirare la testa con le mani.',
+    photo: 'bicicletta',
+  },
+  'russian-twist': {
+    muscles: 'Obliqui e addominali',
+    steps: [
+      'Seduto, ginocchia piegate, busto inclinato indietro a schiena dritta.',
+      'Mani unite davanti al petto.',
+      'Ruota il busto e porta le mani accanto a un fianco.',
+      'Ruota dall’altra parte; ogni lato conta una ripetizione.',
+    ],
+    tip: 'Piedi a terra per cominciare, sollevati quando diventa facile.',
+    photo: 'russian-twist',
+    photoNote: 'In foto con un disco: senza peso il movimento è lo stesso.',
+  },
+  'russian-twist-peso': {
+    muscles: 'Obliqui e addominali',
+    steps: [
+      'Seduto, ginocchia piegate, busto inclinato indietro a schiena dritta.',
+      'Tieni il peso a due mani davanti al petto.',
+      'Ruota il busto e porta il peso accanto a un fianco.',
+      'Ruota dall’altra parte; ogni lato conta una ripetizione.',
+    ],
+    tip: 'Si gira il busto, non solo le braccia.',
+    photo: 'russian-twist',
   },
   hollow: {
     muscles: 'Addome',

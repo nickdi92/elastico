@@ -23,7 +23,7 @@ export function describeDose(p: Prescription): string {
 
 function nextInfo(p: Prescription): NonNullable<Step['next']> {
   const ex = getExercise(p.exerciseId);
-  return { exerciseId: ex.id, name: ex.name, detail: describeDose(p), bandId: p.bandId, setup: ex.setup };
+  return { exerciseId: ex.id, name: ex.name, detail: describeDose(p), bandId: p.bandId, weightId: p.weightId, setup: ex.setup };
 }
 
 function easyStep(kind: 'warmup' | 'cooldown', id: string): Step {
@@ -75,6 +75,7 @@ export function buildTimeline(session: SessionTemplate): Step[] {
         repSec: ex.repSec,
         sides: ex.unilateral ? 2 : 1,
         bandId: p.bandId,
+        weightId: p.weightId,
       });
       const lastSet = set === p.sets;
       const lastExercise = i === count - 1;

@@ -19,6 +19,17 @@ describe('parseState', () => {
     expect(s.settings).toEqual({ ...DEFAULT_STATE.settings, voice: false });
   });
 
+  it('upgrades data saved before weights, focus and bodyweight', () => {
+    const old = {
+      version: 1,
+      profile: { sex: 'M', age: 38, heightCm: 178, weightKg: 76, experience: 'intermedio', goal: 'tonificare', limitations: [] },
+      equipment: { bands: [], platform: null, gear: ['tappetino', 'manubri'], place: 'dentro' },
+    };
+    const s = parseState(JSON.stringify(old));
+    expect(s.profile?.focus).toEqual([]);
+    expect(s.equipment).toMatchObject({ gear: ['tappetino'], bodyweight: 'off', weights: [{ name: 'Manubri', use: 'manubri', kg: 5 }] });
+  });
+
   it('ignores data saved by an unknown version', () => {
     expect(parseState(JSON.stringify({ version: 99, history: [{ id: 'x' }] }))).toEqual(DEFAULT_STATE);
   });
